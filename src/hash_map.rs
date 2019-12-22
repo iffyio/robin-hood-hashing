@@ -324,15 +324,11 @@ impl<K, V> HashMap<K, V> {
         let ve = self
             .directory
             .iter_mut()
-            .filter_map(|maybe_item| match maybe_item {
-                Some(_) => {
-                    let item = maybe_item.take().unwrap();
-                    match item.value {
-                        Some(_) => Some((item.key, item.value.unwrap())),
-                        None => None,
-                    }
-                }
-                None => None,
+            .filter_map(|maybe_item| {
+                maybe_item.take().and_then(|item| {
+                    let key = item.key;
+                    item.value.map(|value| (key, value))
+                })
             })
             .collect::<Vec<(_, _)>>();
         ve.into_iter()
@@ -521,7 +517,7 @@ mod tests {
         fn entry_to_option<K, V>(entry: Entry<K, V>) -> Option<Entry<K, V>> {
             match entry {
                 entry @ Entry::Occupied(_) => Some(entry),
-                entry @ Entry::Vacant(_) => None,
+                Entry::Vacant(_) => None,
             }
         }
 
